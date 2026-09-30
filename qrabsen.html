@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barcode Scanner Absensi</title>
+  <!-- Library Scanner Barcode / QR Code -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    /* Kontainer untuk Logo dan Judul */
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1 px; /* Jarak antara logo dan tulisan */
+  margin-bottom: 15px;
+}
+
+/* Ukuran Logo */
+.logo {
+  width: 100px;  /* Sesuaikan ukuran lebar logo */
+  height: 100px; /* Sesuaikan ukuran tinggi logo */
+  object-fit: contain;
+}
+
+/* Penyesuaian Judul */
+.header-text {
+  text-align: left; /* Teks rata kiri di samping logo */
+}
+
+.header-text h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+  text-transform: uppercase;
+}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body 
+ {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  
+  /* --- KODINGAN BACKGROUND FOTO --- */
+  background-image: url('bg-ponpes.jpg'); /* Ganti dengan nama file gambar Anda */
+  background-size: cover;        /* Agar foto menutup seluruh layar */
+  background-position: center;   /* Agar foto berada di tengah */
+  background-repeat: no-repeat;  /* Agar foto tidak mengulang/terpotong */
+  background-attachment: fixed;  /* Agar foto tetap diam saat di-scroll */
+  /* ------------------------------- */
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 15px;
+  margin: 0;
+}
+    .scanner-card {
+      background: #fefcfc53;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgb(9, 0, 0);
+      text-align: center;
+    }
+    h2 {
+      font-size: 1.3rem;
+      color: #1a1a1a;
+      margin-bottom: 15px;
+    }
+
+    /* Styling Pilihan Menu (Radio Button) */
+    .menu-options {
+      display: flex;
+      justify-content: space-around;
+      background-color: #f8f9fa;
+      padding: 8px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #e9ecef;
+    }
+    .menu-options label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #495057;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .menu-options input[type="radio"] {
+      accent-color: #0d6efd;
+      transform: scale(1.2);
+    }
+
+    #reader {
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: none !important;
+    }
+    #status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      background-color: #e9ecef;
+      color: #495057;
+      transition: all 0.3s ease;
+    }
+    .status-sending {
+      background-color: #cce5ff !important;
+      color: #004085 !important;
+    }
+    .status-success {
+      background-color: #d4edda !important;
+      color: #155724 !important;
+    }
+    .status-error {
+      background-color: #f8d7da !important;
+      color: #721c24 !important;
+    }
+  </style>
+</head>
+<body>
+
+<div class="scanner-card">
+  <h2>Scan Barcode Absensi</h2>
+  <!-- Bagian Header dengan Logo -->
+<div class="header-container">
+  <!-- Ganti 'logo.png' dengan nama file gambar logo Anda -->
+  <img src="logo.png" alt="Logo" class="logo">
+  
+  <div class="header-text">
+    <h3>PONDOK PESANTREN<br>DARUL HIKMAH</h3>
+  </div>
+</div>
+  
+  <!-- Pilihan Menu Status -->
+  <div class="menu-options">
+
+    <label>
+      <input type="radio" name="keterangan" value="Pulang">
+      Pulang
+    </label>
+    <label>
+      <input type="radio" name="keterangan" value="Kembali">
+      Kembali
+    </label>
+  </div>
+
+  <!-- Container Kamera -->
+  <div id="reader"></div>
+
+  <!-- Status Info -->
+  <div id="status">Pilih menu di atas, lalu scan barcode...</div>
+</div>
+
+<script>
+  // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbztrr-OVPN_R0v1XNMOIUeenoC3z10w01EBtRy5kxlBWREf99CFIdsKFdLgRgG_4-nlhA/exec';
+  
+  const statusDiv = document.getElementById('status');
+  let isScanning = false; // Mencegah scan ganda bersamaan
+
+  // Fungsi yang dipanggil saat barcode berhasil dibaca
+  function onScanSuccess(decodedText) {
+    // Fungsi untuk menghasilkan bunyi BEEP tinggi dan keras
+function playBeepSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    
+    const audioCtx = new AudioContext();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    // Jenis gelombang suara (sine / square / sawtooth)
+    // 'square' menghasilkan bunyi beep digital yang tajam dan nyaring
+    oscillator.type = 'square'; 
+
+    // Frekuensi nada (1200 Hz = nada beep tinggi yang jelas)
+    oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+
+    // Pengaturan Volume Internal Keras (1.0 = Maksimal)
+    gainNode.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+    // Hubungkan komponen audio
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    // Bunyikan selama 0.2 detik (200 milidetik)
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.2);
+  } catch (e) {
+    console.error("Gagal memutar suara beep:", e);
+  }
+}
+    if (isScanning) return;
+    isScanning = true;
+
+    // Ambil pilihan keterangan yang sedang aktif (/ Pulang / Kembali)
+    const pilihanKeterangan = document.querySelector('input[name="keterangan"]:checked').value;
+
+    // Ambil waktu/timeline saat barcode di-scan
+    const saatini = new Date();
+    const timeline = saatini.toLocaleString('id-ID', { 
+      dateStyle: 'medium', 
+      timeStyle: 'medium' 
+    });
+
+    // Tampilkan info mengirim
+    statusDiv.className = 'status-sending';
+    statusDiv.textContent = `Mengirim [${pilihanKeterangan}]: ${decodedText}...`;
+
+    // Data yang dikirim ke Google Sheets
+    const payload = {
+      nama: decodedText,         // Hasil Barcode (Nama)
+      timeline: timeline,        // Waktu
+      keterangan: pilihanKeterangan // Pulang / Kembali
+    };
+
+    // Kirim data ke Google Sheets
+    fetch(scriptURL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      statusDiv.className = 'status-success';
+      statusDiv.textContent = `Tersimpan: ${decodedText} (${pilihanKeterangan})`;
+
+      // Jeda 2,5 detik sebelum bisa scan berikutnya
+      setTimeout(() => {
+        statusDiv.className = '';
+        statusDiv.textContent = 'Kamera Siap...';
+        isScanning = false;
+      }, 2500);
+    })
+    .catch(error => {
+      statusDiv.className = 'status-error';
+      statusDiv.textContent = 'Gagal menyimpan data!';
+      console.error('Error:', error);
+      isScanning = false;
+    });
+  }
+
+  // Inisialisasi Scanner
+  const html5QrcodeScanner = new Html5QrcodeScanner(
+    "reader", 
+    { 
+      fps: 10, 
+      qrbox: { width: 250, height: 150 } 
+    },
+    /* verbose= */ false
+  );
+
+  html5QrcodeScanner.render(onScanSuccess);
+</script>
+
+</body>
+</html>
